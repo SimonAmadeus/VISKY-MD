@@ -1,0 +1,8 @@
+timestep 0.005 # Timestep.
+temperature 0.7 # Temperature.
+n_steps 10000
+traj_period 100
+log_period 100
+init_velocity G
+non_bonded_interactions LJ_12_6 1 1
+thermostat Berendsen_Thermostat 0.5
