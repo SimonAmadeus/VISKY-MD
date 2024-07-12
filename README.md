@@ -1,4 +1,4 @@
-# Visky-MD - your simulation package for the calculation of viscosities.
+# VISKY-MD -  simulation package for the calculation of viscosities.
 
 ## Features:
 
