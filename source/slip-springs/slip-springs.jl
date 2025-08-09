@@ -142,7 +142,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
     
     # Slip-spring migration. If a slip-spring is anchored at a chain end, it
     # might move to a randomly chosen chain end under the condition that the
-    # metropolis criterion is fullfilled.
+    # metropolis criterion is fullfilled. 
     
     ∆i = 0
     ∆j = 0
@@ -152,7 +152,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
             p_i = t_bond_vec[i].p_1
             p_j = t_bond_vec[i].p_2
 
-            # check anchor point 1 for chain end
+            # Check anchor point 1 for chain end.
             if p_i == 1 || mod(p_i, c_l) == 0 || mod(p_i - 1, c_l) == 0
                 ind = select_random_chain_end(length(particle_vec), c_l)
                 while ind == p_i || ind == p_j
@@ -170,7 +170,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
                 end    
             end
 
-            # anchor point 2
+            # Anchor point 2.
             if p_j == 1 || mod(p_j, c_l) == 0 || mod(p_j - 1, c_l) == 0
                 ind = select_random_chain_end(length(particle_vec), c_l)
                 while ind == p_i || ind == p_j
@@ -191,8 +191,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
         end
     end
 
-    # number of Monte Carlo steps n_mc is set in the control file
-    for i_mc in 1:t_bonds.n_mc 
+    for i_mc in 1:t_bonds.n_mc # Number of Monte Carlo steps, set in the control file.
         for i in 1:length(t_bond_vec)
             p_i = t_bond_vec[i].p_1
             p_j = t_bond_vec[i].p_2
@@ -227,7 +226,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
             end
 
             if p_i + ∆i == p_j + ∆j
-                # remove and reate new slip-spring
+                # Remove and reate new slip-spring.
                 p_i = Int(ceil(rand() * length(particle_vec)))
                 p_j = Int(ceil(rand() * length(particle_vec)))
                 if p_i != p_j
@@ -235,7 +234,7 @@ function migration!(first_step, args::System, c_l::Int64, particle_vec::Vector{P
                     t_bond_vec[i].p_2 = p_j
                 end 
             else
-                # compare bond energies before and after slip-spring migrgation
+                # Compare bond energies before and after slip-spring migrgation.
                 energy_before = bond_energy(args, p_i, p_j, particle_vec)
                 energy_after = bond_energy(args, p_i + ∆i, p_j + ∆j, particle_vec) 
 

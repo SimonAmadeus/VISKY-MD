@@ -3,7 +3,6 @@ export run_MD
 include("system.jl")
 
 # Main simulation loop.
-# In this script parameters and functionalities are also initianized.
 #
 # Parameters are:
 # energy -> potential energy of the system
@@ -13,7 +12,8 @@ include("system.jl")
 # E_kin -> kinetic energy tensor of the system
 #
 # Functionalities are:
-# - particle field representation
+# - particle field pair_interactions
+# - staggared lattice or central difference density gradient interpolation
 # - Neighbor list (with skim)
 # - slip-springs (for CG polymers)
 # - shear flow (viscosity calculation)
@@ -105,6 +105,7 @@ function run_MD(args::System)
     # Open output files.
     log_file = open(args.log_file, "w")
     traj_file = open(args.traj_file, "w")
+    
     # Shear flow:
     if typeof(args.shear) != No_Shear
         shear_file = open(args.shear_file, "w")
@@ -120,9 +121,10 @@ function run_MD(args::System)
     if f_sample_steps == true
         force_file = open("forces.txt", "w")
     end
-    # Calculate momentum drift
-    calc_drift = false
-    P_tot_prev = 0
+    # momentum drift
+    calc_drift = true
+    #P_tot_prev = 0
+    P_mag_prev = 0.0
     momentum_drift = []
 
 ################################################################################
@@ -168,6 +170,9 @@ function run_MD(args::System)
 
     @showprogress for step_i = 1:args.n_steps
     #for step_i = 1:args.n_steps
+        
+        #println("step #: ", step_i)
+        #println(particle_vec)
 
         # Neigbor list update:
         if typeof(args.nl) != No_NL
@@ -221,10 +226,10 @@ function run_MD(args::System)
         energy2 = energy - energy1 
         #energy, stress = apply_non_bonded_interactions!(args, args.system_type, particle_vec, velocity_vec, neighbor_list, c_l, force_vec, energy, stress, mesh, vertex, cell_vertices, args.non_bonded_interactions)
         if typeof(args.non_bonded_interactions) != No_Non_Bonded
-            #energy, stress = apply_non_bonded_interactions!(args, args.system_type, particle_vec, velocity_vec, neighbor_list, c_l, force_vec, energy, stress, mesh, vertex, cell_vertices, args.non_bonded_interactions)
-            apply_non_bonded_interactions!(args, args.system_type, particle_vec, velocity_vec, neighbor_list, c_l, force_vec, energy, stress, mesh, vertex, cell_vertices, args.non_bonded_interactions)
+            energy, stress = apply_non_bonded_interactions!(args, args.system_type, particle_vec, velocity_vec, neighbor_list, c_l, force_vec, energy, stress, mesh, vertex, cell_vertices, args.non_bonded_interactions)
+            #apply_non_bonded_interactions!(args, args.system_type, particle_vec, velocity_vec, neighbor_list, c_l, force_vec, energy, stress, mesh, vertex, cell_vertices, args.non_bonded_interactions)
         end
-        
+     
         energy3 = energy - energy1 - energy2
         # Slip-spring interactions, if active.
         if typeof(args.t_bonds) != No_T_Bonds
@@ -278,7 +283,7 @@ function run_MD(args::System)
         if step_i%args.n_steps == 0.0 && typeof(args.t_bonds) != No_T_Bonds
             apply_t_bond_dump(entanglement_file, t_bond_vec)
         end
-        f_sample_final = false
+        f_sample_final = true
         if step_i%args.n_steps == 0.0 && f_sample_final == true
             write_final_forces(force_vec)
         end
@@ -286,14 +291,15 @@ function run_MD(args::System)
             write_forces(force_file, force_vec)
         end
         
-        # Calculate & output momentum drift
+        # calculate momentum drift
 
-        P_tot = calc_totalmomentum(particle_vec, velocity_vec)
+        #P_tot = calc_totalmomentum(particle_vec, velocity_vec)
+        P_mag = calc_momentum_mag(particle_vec, velocity_vec)
         if step_i > 1 && calc_drift == true
-            momentum_drift!(momentum_drift, P_tot, P_tot_prev)
+            momentum_drift!(args.∆t, momentum_drift, P_mag, P_mag_prev)
         end
-        P_tot_prev = P_tot
-        if step_i%args.n_steps == 0.0 && calc_drift == true
+        P_mag_prev = P_mag
+        if (step_i % args.n_steps) == 0 && calc_drift
             write_drift(momentum_drift)
         end
 

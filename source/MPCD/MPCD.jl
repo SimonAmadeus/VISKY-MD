@@ -74,12 +74,13 @@ function apply_collisions!(args::System, particle_vec::Vector{Particle}, velocit
         end
     end
 
-    #θ = rand(Uniform(30, 180))
-    #θ = rand(Normal(130, 10))
+    #θ_deg = rand(Uniform(30, 180))
+    #θ_deg = rand(Normal(130, 10))
+    θ_deg = collisions.θ
+    θ = deg2rad(θ_deg)
     #θ = generate_sine_angle()
-    θ = collisions.θ
 
-    # velocity update in collision step
+ # velocity update in collision step
     for i in eachindex(particle_vec)
         ix = Int64(div(x[i], len_cells[1])) + 1
         iy = Int64(div(y[i], len_cells[2])) + 1
@@ -166,5 +167,5 @@ end
 function generate_sine_angle()
     u = rand()  # generate a uniform random number [0, 1]
     angle = acos(1 - 2 * u)  # apply the inverse cumulative distribution function
-    return rad2deg(angle)  # convert to degrees
+    return angle
 end

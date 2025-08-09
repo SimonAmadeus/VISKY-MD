@@ -1,6 +1,6 @@
 function print_info(args::System)
     
-    println("You are currently using Visky-MD, written by Simon Alberti (Version July 2024).")
+    println("You are currently using VISKY-MD, written by Simon Alberti (Version July24).")
 
     if args.non_bonded_interactions != No_Non_Bonded()
         println("Non-bonded interactons: ", args.non_bonded_interactions)
@@ -32,6 +32,6 @@ function print_info(args::System)
     end
 
     if args.collisions != No_Collisions()
-        println("Collisions are introduced: ", args.collisions)
+        println("Collisions are activated: ", args.collisions)
     end
 end

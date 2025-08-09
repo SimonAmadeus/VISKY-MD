@@ -12,6 +12,19 @@ function calc_totalmomentum(particle_vec::Vector{Particle}, velocity_vec)
     return P_tot
 end
 
+function calc_momentum_mag(particle_vec::Vector{Particle}, velocity_vec)
+    P_tot_x::Float64 = 0
+    P_tot_y::Float64 = 0
+    P_tot_z::Float64 = 0
+    for i = 1:length(velocity_vec)
+        P_tot_x += velocity_vec[i][1] * particle_vec[i].mass
+        P_tot_y += velocity_vec[i][2] * particle_vec[i].mass
+        P_tot_z += velocity_vec[i][3] * particle_vec[i].mass
+    end
+    P_mag = sqrt(P_tot_x^2 + P_tot_y^2 + P_tot_z^2)
+    return P_mag
+end
+
 function velocity_rescale!(particle_vec::Vector{Particle}, velocity_vec)
     # Calculate total momentum.
     P_tot_x::Float64 = 0
@@ -38,8 +51,8 @@ function velocity_rescale!(particle_vec::Vector{Particle}, velocity_vec)
     end
 end
 
-function momentum_drift!(momentum_drift, P_tot, P_tot_prev)
-    current_drift = (P_tot - P_tot_prev) / P_tot_prev
+function momentum_drift!(∆t, momentum_drift, P_mag, P_mag_prev)
+    current_drift = (P_mag - P_mag_prev) / ∆t
 #=    
     println("current: ", current_drift)
     println("P: ", P_tot)

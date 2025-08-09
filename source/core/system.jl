@@ -87,6 +87,7 @@ struct Mesh
     particle_grid::Array{Float64,1}
     gradient_grid::Array{Float64,2}
     boxsize::Array{Float64,1}
+    use_staggered::Bool
 end
 
 # System structure. Specify control information.

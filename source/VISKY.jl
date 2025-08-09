@@ -36,7 +36,7 @@ include("barostat/barostat.jl")
 include("interactions/non_bonded/no_non_bonded.jl")
 include("interactions/non_bonded/pair_interactions/LJ.jl")
 include("interactions/non_bonded/pair_interactions/DPD.jl")
-include("interactions/non_bonded/field_based_interactions/hPF.jl")
+include("interactions/non_bonded/field_based_interactions/HPF.jl")
 
 include("interactions/bonds/bond_forces.jl")
 include("interactions/angles/angle_forces.jl")

@@ -46,7 +46,7 @@ function apply_non_bonded_interactions!(args::System, ::No_Mol, particle_vec::Ve
 end
 
 # 1-2 and 1-3 exclusion for bonded atoms.
-function apply_non_bonded_interactions!(args::System, ::Molecular, particle_vec::Vector{Particle}, velocity_vec, neighbor_list::Any, c_l::Int64, force_vec, energy::Float64, stress::Vector{Float64}, mesh::Mesh, lj126::LJ_12_6)
+function apply_non_bonded_interactions!(args::System, ::Molecular, particle_vec::Vector{Particle}, velocity_vec, neighbor_list::Any, c_l::Int64, force_vec, energy::Float64, stress::Vector{Float64}, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, lj126::LJ_12_6)
 
     #for i = 2:length(particle_vec)
     #    for j = 1:i-1

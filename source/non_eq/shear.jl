@@ -9,7 +9,6 @@ end
 
 function apply_shear!(args::System, particle_vec::Vector{Particle}, velocity_vec, ::No_Shear) end
 
-# Exchange of velocities takes place
 function apply_shear!(args::System, particle_vec::Vector{Particle}, velocity_vec, shear::Shear_CTRL)
     
     i_M = floor(shear.n_slabs / 2) + 1 # Number of middle slab.
@@ -62,7 +61,6 @@ function apply_shear!(args::System, particle_vec::Vector{Particle}, velocity_vec
 
 end
 
-# create bins for the velocity profile
 function initialize_shear!(args::System, shear::Shear_CTRL)
     d_slab = args.box[3] / shear.n_slabs
     z_bins = [] # Storage for v_x.
@@ -74,7 +72,7 @@ function initialize_shear!(args::System, shear::Shear_CTRL)
 end
 
 function sample_velocity_profile!(args::System, particle_vec::Vector{Particle}, velocity_vec, d_slab::Float64, z_bins::Vector{}, shear::Shear_CTRL)    
-# Sample velocity profile in a single simulation step
+# Sample velocity profile in a single simulation step.
     for i in 1:length(particle_vec)
         z = particle_vec[i].pos[3] + args.box[3] / 2
         i_bin = floor(Int64, z / d_slab) + 1
@@ -82,7 +80,6 @@ function sample_velocity_profile!(args::System, particle_vec::Vector{Particle}, 
     end
 end
 
-# output
 function apply_shear_log(file0, file1, step::Int64, args::System, d_slab, z_bins, shear::Shear_CTRL)
 
     string_out = "z v_x\n" # Header.

@@ -20,15 +20,14 @@
 #   |     |     |     |         |     |     |     |      |     |     |     |      |     |     |     |
 #   1-----2-----3-----1        10----11----12-----10    19----20----21-----19     1-----2-----3-----1
 
-# initialize the mesh 
 function init_mesh(boxsize::Vector{Float64}, NC::Vector{Int64})
     # edge is the length of a cell
-    egde_x = boxsize[1] / NC[1]
-    egde_y = boxsize[2] / NC[2]
-    egde_z = boxsize[3] / NC[3]
-    edge_size = [egde_x, egde_y, egde_z]
+    edge_x = boxsize[1] / NC[1]
+    edge_y = boxsize[2] / NC[2]
+    edge_z = boxsize[3] / NC[3]
+    edge_size = [edge_x, edge_y, edge_z]
     # NV is the number of vertices in each dimension
-    # number of cells
+    # NC is the number of cells
     NC_total::Int64 = NC[1] * NC[2] * NC[3]
     # number of vertices (practically, due to PBCs: NV_total = NC_total)
     NV_total::Int64 = (NC[1] + 1) * (NC[2] + 1) * (NC[3] + 1)
@@ -36,11 +35,13 @@ function init_mesh(boxsize::Vector{Float64}, NC::Vector{Int64})
     # a staggered lattice
     particle_grid = zeros(Float64, NC_total)
     gradient_grid = zeros(Float64, NC_total, 6)
-    return Mesh(edge_size, NC, NC_total, NV_total, particle_grid, gradient_grid, boxsize)
+    use_staggered = false
+    return Mesh(edge_size, NC, NC_total, NV_total, particle_grid, gradient_grid, boxsize, use_staggered)
 end
 
-# initialize vertex array -> gives you a vertex number for given indices 
 function init_vertex_matrix(mesh::Mesh)
+    # initialize vertex array -> gives you a vertex number for given indices 
+
     vertex = zeros(Int, mesh.NC[1] + 1, mesh.NC[2] + 1, mesh.NC[3] + 1)
     index_v = 1
     for k in 1:mesh.NC[3]
@@ -65,10 +66,10 @@ function init_vertex_matrix(mesh::Mesh)
             end
         end
     end
-
     # edges
     # each point on a edge exists four times
     # we need three loops, to go along the four edges of each dimension 
+
     for k in [1, z_max]
         for j in [1, y_max]
             for i in range(2, mesh.NC[1])
@@ -112,8 +113,8 @@ function init_vertex_matrix(mesh::Mesh)
     return vertex
 end
 
-# initialize indices for vertices
 function init_cell_vertices(mesh::Mesh, vertex::Array{Int64, 3})
+# initialize cell vertices -> gives indices for all eight vertices in a given cell
 
     cell_vertices = zeros(Int, mesh.NC_total, 8)
     for k in 1:mesh.NC[3]
@@ -180,6 +181,8 @@ function cloudincell(wrapped_pos::Array{Float64,1}, gridedge::Array{Float64,1}, 
 end
 
 function cloudincell!(position::Vector{Float64}, mesh::Mesh, cell_vertices::Array{Int64, 2}, i)
+    # distribute particle mass over eight vertices in its cell
+
     # cell index = 1 + floor(x/cell_sizex) + floor(y/cell_sizey)*Nx + floor(z/cell_sizez)*Nx*Ny 
     # Bottom (x ->, y ^):
     # 3           4 
@@ -299,7 +302,7 @@ function gaussian_distribution!(position::Vector{Float64}, mesh::Mesh, i, σ)
 end
 
 function positional_density(particle_vec::Vector{Particle}, mesh::Mesh, cell_vertices::Array{Int64, 2})
-    # This function calculates the local interpolated density at the particle positions.
+# this function calculates the local interpolated density at the particle positions
     d_pos = zeros(Float64, length(particle_vec)) 
     pic = zeros(Float64, 8)
 
@@ -351,7 +354,7 @@ function positional_density(particle_vec::Vector{Particle}, mesh::Mesh, cell_ver
 end
 
 function Grad_DensVertex(vertex::Array{Int64, 3}, mesh::Mesh)
-    
+# ca<lculate density gradients on the standard density grid
     grid_grad_x = zeros(Float64, mesh.NC_total)
     grid_grad_y = zeros(Float64, mesh.NC_total)
     grid_grad_z = zeros(Float64, mesh.NC_total)
@@ -370,9 +373,9 @@ function Grad_DensVertex(vertex::Array{Int64, 3}, mesh::Mesh)
                 j_minus = pbc_mesh(j - 1, mesh.NC[2])
                 k_minus = pbc_mesh(k - 1, mesh.NC[3])
                 
-                grad_x = 0.5 * (mesh.particle_grid[vertex[i_plus, j, k]] - mesh.particle_grid[vertex[i_minus, j, k]])
-                grad_y = 0.5 * (mesh.particle_grid[vertex[i, j_plus, k]] - mesh.particle_grid[vertex[i, j_minus, k]])
-                grad_z = 0.5 * (mesh.particle_grid[vertex[i, j, k_plus]] - mesh.particle_grid[vertex[i, j, k_minus]])
+                grad_x = 0.5 / mesh.edge_size[1] * (mesh.particle_grid[vertex[i_plus, j, k]] - mesh.particle_grid[vertex[i_minus, j, k]])
+                grad_y = 0.5 / mesh.edge_size[2] * (mesh.particle_grid[vertex[i, j_plus, k]] - mesh.particle_grid[vertex[i, j_minus, k]])
+                grad_z = 0.5 / mesh.edge_size[3] * (mesh.particle_grid[vertex[i, j, k_plus]] - mesh.particle_grid[vertex[i, j, k_minus]])
                 
                 grid_grad_x[index] += grad_x
                 grid_grad_y[index] += grad_y
@@ -384,7 +387,7 @@ function Grad_DensVertex(vertex::Array{Int64, 3}, mesh::Mesh)
 end
 
 function Grad_staggered_lattice!(vertex::Array{Int64, 3}, mesh::Mesh)
-# Calculating the density gradients on a staggered lattice.
+# calculate the density gradients on a staggered lattice
 
     x_max = mesh.NC[1] + 1
     y_max = mesh.NC[2] + 1
@@ -442,3 +445,21 @@ function Grad_staggered_lattice!(vertex::Array{Int64, 3}, mesh::Mesh)
         end
     end
 end
+
+# short pbcs for vertex matrix, but doesn't work in this form,
+# if you want only your array to go from 1 to N[1]*N[2]*N[3] 
+#for k in 1 mesh.NV[3]
+    #    for j in 1:mesh.NV[2]
+    #        vertex[mesh.NV[1] + 1, j, k] = vertex[1, j, k]
+    #    end
+    #end
+    #for k in 1 mesh.NV[3]
+    #    for i in 1:mesh.NV[1]
+    #        vertex[i, mesh.NV[2] + 1, k] = vertex[i, 1, k]
+    #    end
+    #end
+    #for j in 1 mesh.NV[2]
+    #    for i in 1:mesh.NV[1]
+    #        vertex[i, j, mesh.NV[3] + 1] = vertex[i, j, 1]
+    #    end
+    #end

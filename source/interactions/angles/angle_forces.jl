@@ -41,5 +41,7 @@ function apply_angle_interactions!(args::System, particle_vec::Vector{Particle},
         energy += harmonic_angle.κ_a * (θ - harmonic_angle.θ_0) ^ 2
 
     end
+    average_θ = θ_sum / length(angle_vec)
+    #println("Average = ", average_θ)
     return energy, stress
 end

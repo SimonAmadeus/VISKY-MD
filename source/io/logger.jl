@@ -69,8 +69,9 @@ function apply_logger(fileO, first_step::Bool, step::Int64, velocity_vec, energy
             string_out*=format(totalkineticenergy,precision=6)*" "
         end
         if log.Momentum == true
-            Momentum = calc_totalmomentum(particle_vec, velocity_vec)
-            string_out*=format(Momentum,precision=16)*" "
+            #momentum = calc_totalmomentum(particle_vec, velocity_vec)
+            momentum = calc_momentum_mag(particle_vec, velocity_vec)
+            string_out*=format(momentum, precision=16)*" "
         end
         string_out*="\n"
         write(fileO, string_out)

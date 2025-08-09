@@ -1,8 +1,7 @@
-# Visky-MD - your simulation package for the calculation of viscosities.
+# VISKY-MD (V1.1).
 
 ## Features:
 
-- Thermostats: Berendsen, Andersen, Lowe-Andersen
 - Harmonic bonds
 - Harmonic angles
 - Lennar-Jones pair interactions
@@ -10,21 +9,18 @@
 - Hybrid particle-field molecular dynamics 
 -> with classical interactions and Gaussian convolution of atomic denisities with FFT
 - Shear flow (Non-eq.)
-- Slip-springs (polymers)
-
+- Thermostats: Berendsen, Andersen, Lowe-Andersen
+- Multi particle collision dynamics
 
 ### In progress:
 
-- Multiple particle types
-- Multi particle collision dynamics
-- Various thermostats
+- Different particle types
 
 ## Tools
 
 - RDF
 - MSD
 - E2E autocorrelation & relaxation time (polymers)
-- Shear flow analysis
 
 ## Running the code:
 
@@ -32,6 +28,11 @@
 import Pkg; Pkg.add("Formatting"); Pkg.add("Distributions"); Pkg.add("ProgressMeter"); Pkg.add("Debugger"); Pkg.add("Statistics"); Pkg.add("LinearAlgebra"); Pkg.add("Random"); Pkg.add("FFTW")
 
 ### Runing the code.
-You will need an input file, typically called input.data and a control file, typically named control.txt. Run with the following command:
+You will need an input file, typically called input.data and a control file, typically named control.txt:
 
-julia /your/path/Visky-MD/source/start.jl
+- input.data
+- control.txt
+
+Run with the following command:
+
+julia /your/path/VISKY/source/start.jl

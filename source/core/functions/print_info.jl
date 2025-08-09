@@ -16,6 +16,14 @@ end
 
 function write_drift(momentum_drift)
     open("momentum_drift.txt", "w") do file
-        println(file, mean(momentum_drift))
+        m  = mean(momentum_drift)
+        sd = std(momentum_drift)
+        mx = maximum(abs.(momentum_drift))
+        mn = minimum(abs.(momentum_drift))
+
+        println(file, "Mean: $m")
+        println(file, "Std: $sd")
+        println(file, "Max (|drift|): $mx")
+        println(file, "Min (|drift|): $mn")
     end
 end

@@ -31,3 +31,37 @@ function update_velocities!(args::System, particle_vec::Vector{Particle}, veloci
         velocity_vec[i] .+= 0.5 .* (force_vec[i] ./ particle_vec[i].mass) .* args.∆t
     end 
 end
+
+# Initial version of the position and velocity update:
+#=
+function update_positions!(args::System, particle_vec::Vector{Particle}, velocity_vec::Vector{Velocity}, force_vec::Vector{Force})
+
+    # Update positions.
+    for i = 1:length(particle_vec)
+        particle_vec[i].pos[1] += velocity_vec[i].velocity[1] * args.∆t
+        particle_vec[i].pos[2] += velocity_vec[i].velocity[2] * args.∆t
+        particle_vec[i].pos[3] += velocity_vec[i].velocity[3] * args.∆t
+    end 
+
+    # Update images.
+    for i = 1:length(particle_vec)
+        particle_vec[i].image[1] += Int(floor((particle_vec[i].pos[1] + args.box[1] / 2) / args.box[1]))
+        particle_vec[i].image[2] += Int(floor((particle_vec[i].pos[2] + args.box[2] / 2) / args.box[2]))
+        particle_vec[i].image[3] += Int(floor((particle_vec[i].pos[3] + args.box[3] / 2) / args.box[3]))
+        particle_vec[i].pos[1]   -= args.box[1] * floor((particle_vec[i].pos[1] + args.box[1] / 2) / args.box[1])
+        particle_vec[i].pos[2]   -= args.box[2] * floor((particle_vec[i].pos[2] + args.box[2] / 2) / args.box[2])
+        particle_vec[i].pos[3]   -= args.box[3] * floor((particle_vec[i].pos[3] + args.box[3] / 2) / args.box[3])
+    end
+
+end
+
+function update_velocities!(args::System, particle_vec::Vector{Particle}, velocity_vec::Vector{Velocity}, force_vec::Vector{Force})
+
+    # Update velocities.
+    for i = 1:length(particle_vec)
+        velocity_vec[i].velocity[1] += 0.5 * force_vec[i].force[1] / particle_vec[i].mass * args.∆t
+        velocity_vec[i].velocity[2] += 0.5 * force_vec[i].force[2] / particle_vec[i].mass * args.∆t
+        velocity_vec[i].velocity[3] += 0.5 * force_vec[i].force[3] / particle_vec[i].mass * args.∆t
+    end 
+
+end=#

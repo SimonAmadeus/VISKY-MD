@@ -5,7 +5,7 @@ struct original_hPF_Interactions <: Non_Bonded_Interactions
     mesh_points::Vector{Int64}
 end
 
-function apply_non_bonded_interactions!(args::System, ::System_Type, particle_vec::Vector{Particle}, velocity_vec, neighbor_list::Any, c_l::Int64, force_vec, energy::Float64, stress::Vector{Float64}, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, hPF::Non_Bonded_Interactions)
+function apply_non_bonded_interactions!(args::System, ::System_Type, particle_vec::Vector{Particle}, velocity_vec, neighbor_list::Any, c_l::Int64, force_vec, energy::Float64, stress::Vector{Float64}, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, HPF::Non_Bonded_Interactions)
     σ = 1 # Parameter for Gaussian cloud in cell (particle diameter).
     clear_mesh!(mesh)
     d_pos = zeros(Float64, mesh.NC_total) 
@@ -15,19 +15,22 @@ function apply_non_bonded_interactions!(args::System, ::System_Type, particle_ve
     end
 
     d_pos = positional_density(particle_vec, mesh, cell_vertices)
+    
+    if !mesh.use_staggered
+        energy = Particle_Field_Interactions!(particle_vec, force_vec, energy, mesh, vertex, cell_vertices, d_pos, HPF)
+    else
+        energy = Particle_Field_Interactions_Staggered_Lattice!(particle_vec, force_vec, energy, mesh, vertex, cell_vertices, d_pos, HPF)
+    end
 
-    Particle_Field_Interactions!(particle_vec, force_vec, energy, mesh, vertex, cell_vertices, d_pos, hPF)
-    #Particle_Field_Interactions_Staggered_Lattice!(particle_vec, force_vec, energy, mesh, vertex, cell_vertices, d_pos, hPF)
-
-    #return energy, stress
+    return energy, stress
 end
 
-function Particle_Field_Interactions!(particle_vec::Vector{Particle}, force_vec, energy::Float64, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, d_pos::Vector{Float64}, hPF::original_hPF_Interactions)
+function Particle_Field_Interactions!(particle_vec::Vector{Particle}, force_vec, energy::Float64, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, d_pos::Vector{Float64}, HPF::original_hPF_Interactions)
     # Calculate forces and energies through interpolation of the gradients
     # average density
     avg_den = length(particle_vec) / prod(mesh.boxsize)
     # constants for force calculation
-    ikomp = 1 / hPF.κ
+    ikomp = 1 / HPF.κ
     # inverse density per cell
     idpc = 1 / (avg_den * prod(mesh.edge_size))
 
@@ -130,15 +133,15 @@ function Particle_Field_Interactions!(particle_vec::Vector{Particle}, force_vec,
         energy += d_pos[i] * ikomp * idpc
 
     end
-    #return energy
+    return energy
 end
 
-function Particle_Field_Interactions_Staggered_Lattice!(particle_vec::Vector{Particle}, force_vec, energy::Float64, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, d_pos::Vector{Float64}, hPF::original_hPF_Interactions)
+function Particle_Field_Interactions_Staggered_Lattice!(particle_vec::Vector{Particle}, force_vec, energy::Float64, mesh::Mesh, vertex::Array{Int64, 3}, cell_vertices::Array{Int64, 2}, d_pos::Vector{Float64}, HPF::original_hPF_Interactions)
     # Calculate forces and energies through interpolation of the gradients, 
     # which are defined on a staggered lattice
     avg_den = length(particle_vec) / prod(mesh.boxsize)
     # constants for force calculation
-    ikomp = 1 / hPF.κ
+    ikomp = 1 / HPF.κ
     # dpc = densitry per cell (i = inverse)
     # idpc = constant1 in occam
     idpc = 1 / (avg_den * prod(mesh.edge_size))
@@ -210,32 +213,32 @@ function Particle_Field_Interactions_Staggered_Lattice!(particle_vec::Vector{Par
         yt2 = 1 - yt1
         zt2 = 1 - zt1
 
-        pic[1] = (mesh.edge_size[1] - δx) * (mesh.edge_size[2] - δy) * (mesh.edge_size[3] - δz) / prod(mesh.edge_size)
-        pic[2] = (δx) * (mesh.edge_size[2] - δy) * (mesh.edge_size[3] - δz) / prod(mesh.edge_size)
-        pic[3] = (mesh.edge_size[1] - δx) * (δy) * (mesh.edge_size[3] - δz) / prod(mesh.edge_size)
-        pic[4] = (δx) * (δy) * (mesh.edge_size[3] - δz) / prod(mesh.edge_size)
-        pic[5] = (mesh.edge_size[1] - δx) * (mesh.edge_size[2] - δy) * (δz) / prod(mesh.edge_size)
-        pic[6] = (δx) * (mesh.edge_size[2] - δy) * (δz) / prod(mesh.edge_size)
-        pic[7] = (mesh.edge_size[1] - δx) * (δy) * (δz) / prod(mesh.edge_size)
-        pic[8] = (δx) * (δy) * (δz) / prod(mesh.edge_size)
+        # Tri-linear weighting factors for density interpolation in the cell
+        volinv = 1.0 / prod(mesh.edge_size)
+        pic[1] = (mesh.edge_size[1] - δx)*(mesh.edge_size[2] - δy)*(mesh.edge_size[3] - δz)*volinv
+        pic[2] = δx*(mesh.edge_size[2] - δy)*(mesh.edge_size[3] - δz)*volinv
+        pic[3] = (mesh.edge_size[1] - δx)*δy*(mesh.edge_size[3] - δz)*volinv
+        pic[4] = δx*δy*(mesh.edge_size[3] - δz)*volinv
+        pic[5] = (mesh.edge_size[1] - δx)*(mesh.edge_size[2] - δy)*δz*volinv
+        pic[6] = δx*(mesh.edge_size[2] - δy)*δz*volinv
+        pic[7] = (mesh.edge_size[1] - δx)*δy*δz*volinv
+        pic[8] = δx*δy*δz*volinv
 
         gdx = xt1 * mesh.gradient_grid[ig_cell, 1] + xt2 * mesh.gradient_grid[ig_cell, 2]
         gdy = yt1 * mesh.gradient_grid[ig_cell, 3] + yt2 * mesh.gradient_grid[ig_cell, 4]
         gdz = zt1 * mesh.gradient_grid[ig_cell, 5] + zt2 * mesh.gradient_grid[ig_cell, 6]
 
-        gdx, gdy, gdz = g_field()
-
         # Energy and force calculation
         
         # staggered lattice force calculation
-        force_vec[i].force[1] += - gdx * ikomp * idpc
-        force_vec[i].force[2] += - gdy * ikomp * idpc
-        force_vec[i].force[3] += - gdz * ikomp * idpc
+        force_vec[i][1] += - gdx * ikomp * idpc
+        force_vec[i][2] += - gdy * ikomp * idpc
+        force_vec[i][3] += - gdz * ikomp * idpc
   
         energy += d_pos[i] * ikomp * idpc
 
     end
 
-    #return energy
+    return energy
 
 end

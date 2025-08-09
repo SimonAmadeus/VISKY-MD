@@ -1,5 +1,7 @@
-#include("D:/PhD/Projects/Visky-MD/source/Visky-MD.jl")
-#include("/run/media/simon/Doc-Stick/PhD/Projects/Visky-MD/source/Viskyk-MD.jl")
+# Initialize and start the simulation
+# read control file
+# call the run_MD function
+
 include("./VISKY.jl")
 
 using .VISKY
